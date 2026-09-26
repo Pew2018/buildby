@@ -1,0 +1,58 @@
+name: Build macOS ARM64 GUI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "macos-gui/**"
+      - ".github/workflows/macos-arm64-gui.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build native ARM64 app
+        run: |
+          set -euo pipefail
+          APP="BuildBy.app"
+          mkdir -p "$APP/Contents/MacOS"
+
+          swiftc             -O             -target arm64-apple-macos13.0             -framework Cocoa             macos-gui/BuildByGUI.swift             -o "$APP/Contents/MacOS/BuildBy"
+
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>BuildBy</string>
+            <key>CFBundleDisplayName</key><string>BuildBy</string>
+            <key>CFBundleIdentifier</key><string>io.github.pew2018.buildby</string>
+            <key>CFBundleExecutable</key><string>BuildBy</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>CFBundleShortVersionString</key><string>1.0</string>
+            <key>CFBundleVersion</key><string>1</string>
+            <key>LSMinimumSystemVersion</key><string>13.0</string>
+            <key>LSArchitecturePriority</key>
+            <array><string>arm64</string></array>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+
+          codesign --force --deep --sign - "$APP"
+          ditto -c -k --keepParent "$APP" BuildBy-macOS-arm64.zip
+          file "$APP/Contents/MacOS/BuildBy"
+          lipo -archs "$APP/Contents/MacOS/BuildBy"
+
+      - name: Upload ARM64 app
+        uses: actions/upload-artifact@v4
+        with:
+          name: BuildBy-macOS-arm64
+          path: BuildBy-macOS-arm64.zip
+          if-no-files-found: error
