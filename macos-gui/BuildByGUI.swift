@@ -152,7 +152,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSTableViewDataSource,
         scroll.hasHorizontalScroller = true
         scroll.borderType = .bezelBorder
 
-        for v in [title, filterField, refresh, statusLabel, scroll] { v.translatesAutoresizingMaskIntoConstraints = false; root.addSubview(v) }
+        let views: [NSView] = [title, filterField!, refresh, statusLabel!, scroll]\n        for v in views {\n            v.translatesAutoresizingMaskIntoConstraints = false\n            root.addSubview(v)\n        }
 
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: root.topAnchor, constant: 18),
